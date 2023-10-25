@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useCallback} from 'react';
 
 function Square({ className, value, style, onSquareClick }) {
   return (
@@ -9,7 +9,7 @@ function Square({ className, value, style, onSquareClick }) {
 }
 
 function Board({ xIsNext, squares, onPlay, setStatus }) {
-  function handleClick(i) {
+  const handleClick = useCallback((i) => {
     if (squares[i] || calculateWinner(squares)) {
       return;
     }
@@ -20,12 +20,12 @@ function Board({ xIsNext, squares, onPlay, setStatus }) {
       nextSquares[i] = 'O';
     }
     onPlay(nextSquares);
-  }
+  }, [squares, xIsNext]);
 
   let [status, highlights] = setStatus(squares);
 
   // buildBoard generates the game's board using two for-loops. It also handles the winner's final move, highlighting the squares.
-  function buildBoard() {
+  const buildBoard = useCallback(() => {
     const numRows = 3;
     const numCols = 3;
     const board = [];
@@ -45,7 +45,7 @@ function Board({ xIsNext, squares, onPlay, setStatus }) {
     } 
 
     return board;
-  }
+  }, [status, squares]);
   
   return <>{buildBoard()}</>;
 }
@@ -58,7 +58,7 @@ export default function Game() {
   const [isDescending, setIsDescending] = useState(true);
   const [currMovePos, setCurrMovePos] = useState([Array(9).fill(null)]);
 
-  function handlePlay(nextSquares) {
+  const handlePlay = useCallback((nextSquares) => {
     // We use currMovePos array to store the coordinates of every move.
     let previousHistory = history[currentMove]
     for (let pos = 0; pos < nextSquares.length; pos++) {
@@ -69,16 +69,16 @@ export default function Game() {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
     setHistory(nextHistory);
     setCurrentMove(nextHistory.length - 1);
-  }
+  }, [history, currentMove, currMovePos]);
 
-  function jumpTo(nextMove) {
+  const jumpTo = useCallback((nextMove) => {
     setCurrentMove(nextMove);
-  }
+  });
 
   /* setStatus return a string based on current game's status (winner, on going game or Draw), 
      and a list of the squares' indexes that caused the win, if there is a winner.
   */
-  function setStatus(squares) {
+  const setStatus = useCallback((squares) => {
     const winner = calculateWinner(squares);
     let status;
     let highlights;
@@ -91,16 +91,16 @@ export default function Game() {
       status = "Next player: " + (xIsNext ? 'X' : 'O')
     }
     return [status, highlights];
-  }
+  }, [currentMove, xIsNext]);
 
   // setPosition takes a move value an returns the move's coordinates in the format (row, col).
-  function setPosition(move) {
+  const setPosition = useCallback((move) => {
     let position = "";
     if (currMovePos.length > 0) {
       position = "(" + currMovePos[move][0] + ", " + currMovePos[move][1] + ")";
     }
-    return position
-  }
+    return position;
+  }, [currMovePos]);
 
   let moves = history.map((squares, move) => {
     let description;
@@ -130,17 +130,17 @@ export default function Game() {
   });
 
   // sortMoves flips the boolean isDescending to change the moves history's order.
-  function sortMoves(isDescending) {
+  const sortMoves = useCallback((isDescending) => {
     setIsDescending(!isDescending);
-  }
+  }, []);
 
   // checkOrder checks if isDescending is false, and arranges moves in ascending order.
-  function checkOrder(isDescending) {
+  const checkOrder = useCallback((isDescending) => {
     if (!isDescending) {
       moves.reverse();
     }
     return moves;
-  }
+  }, [moves]);
 
   // Toggle Button used to sort moves list in either ascending or descending order. 
   let toggleButton = "Sort in descending order:";
